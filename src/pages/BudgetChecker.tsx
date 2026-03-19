@@ -104,6 +104,9 @@ export default function BudgetChecker() {
         </Card>
       </div>
 
+      {/* AI Budget Decision Assistant */}
+      <BudgetDecisionAssistant monthlyIncome={data.income} totalSpent={totalExpenses} />
+
       {pieData.length > 0 && (
         <Card className="shadow-md">
           <CardHeader><CardTitle className="text-lg">Expense Distribution</CardTitle></CardHeader>
