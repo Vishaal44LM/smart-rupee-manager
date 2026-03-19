@@ -27,7 +27,7 @@ const items = [
   { title: "Budget Checker", url: "/budget", icon: BarChart3 },
   { title: "Savings Goal", url: "/savings", icon: Target },
   { title: "Subscriptions", url: "/subscriptions", icon: Tv },
-  { title: "Expense Optimizer", url: "/optimizer", icon: Lightbulb },
+  { title: "Priority Scheduler", url: "/optimizer", icon: Lightbulb },
 ];
 
 export function AppSidebar() {

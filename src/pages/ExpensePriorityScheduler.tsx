@@ -6,42 +6,55 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Lightbulb, Plus, Trash2, Zap, CheckCircle2, XCircle } from "lucide-react";
-import { KnapsackExpense, KnapsackResult, knapsackOptimize } from "@/lib/knapsack";
+import { CalendarCheck, Plus, Trash2, Zap, CheckCircle2, Clock } from "lucide-react";
+import {
+  SchedulerExpense,
+  SchedulerResult,
+  PriorityLevel,
+  ExpenseCategory,
+  greedySchedule,
+} from "@/lib/greedy-scheduler";
 import { formatINR } from "@/lib/finance-store";
 
-const PRIORITY_LABELS: Record<number, string> = {
-  1: "Very Low",
-  2: "Low",
-  3: "Medium",
-  4: "High",
-  5: "Critical",
-};
+const PRIORITY_OPTIONS: PriorityLevel[] = ["High", "Medium", "Low"];
+const CATEGORY_OPTIONS: ExpenseCategory[] = ["Essential", "Non-Essential"];
 
-export default function ExpenseOptimizer() {
-  const [expenses, setExpenses] = useState<KnapsackExpense[]>([
-    { id: "1", name: "Food", amount: 2000, priority: 5 },
-    { id: "2", name: "Netflix", amount: 500, priority: 2 },
-    { id: "3", name: "Shopping", amount: 3000, priority: 1 },
-    { id: "4", name: "Transport", amount: 1000, priority: 4 },
+const priorityColor = (p: PriorityLevel) =>
+  p === "High" ? "default" : p === "Medium" ? "secondary" : "outline";
+
+export default function ExpensePriorityScheduler() {
+  const [expenses, setExpenses] = useState<SchedulerExpense[]>([
+    { id: "1", name: "Rent", amount: 2000, priority: "High", category: "Essential" },
+    { id: "2", name: "Food", amount: 1200, priority: "High", category: "Essential" },
+    { id: "3", name: "Netflix", amount: 500, priority: "Low", category: "Non-Essential" },
+    { id: "4", name: "Shopping", amount: 1800, priority: "Medium", category: "Non-Essential" },
+    { id: "5", name: "Transport", amount: 800, priority: "High", category: "Essential" },
   ]);
-  const [budget, setBudget] = useState<number>(4000);
-  const [result, setResult] = useState<KnapsackResult | null>(null);
+  const [budget, setBudget] = useState<number>(5000);
+  const [result, setResult] = useState<SchedulerResult | null>(null);
 
-  // New expense form
+  // Form state
   const [newName, setNewName] = useState("");
   const [newAmount, setNewAmount] = useState<number>(0);
   const [newPriority, setNewPriority] = useState<string>("");
+  const [newCategory, setNewCategory] = useState<string>("");
 
   const addExpense = () => {
-    if (!newName || !newAmount || !newPriority) return;
+    if (!newName || !newAmount || !newPriority || !newCategory) return;
     setExpenses((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), name: newName, amount: newAmount, priority: parseInt(newPriority) },
+      {
+        id: crypto.randomUUID(),
+        name: newName,
+        amount: newAmount,
+        priority: newPriority as PriorityLevel,
+        category: newCategory as ExpenseCategory,
+      },
     ]);
     setNewName("");
     setNewAmount(0);
     setNewPriority("");
+    setNewCategory("");
     setResult(null);
   };
 
@@ -50,33 +63,33 @@ export default function ExpenseOptimizer() {
     setResult(null);
   };
 
-  const optimize = () => {
-    setResult(knapsackOptimize(expenses, budget));
+  const generate = () => {
+    setResult(greedySchedule(expenses, budget));
   };
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
-          <span>💡</span> Expense Optimization Advisor
+          <span>📋</span> Expense Priority Scheduler
         </h1>
         <p className="text-muted-foreground mt-1">
-          Uses the <strong>0/1 Knapsack Algorithm</strong> to select the most important expenses within your budget.
+          Uses the <strong>Greedy Algorithm</strong> to select the most important expenses first within your budget.
         </p>
       </div>
 
-      {/* Budget Input */}
+      {/* Budget */}
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Lightbulb className="h-5 w-5 text-primary" /> Budget Limit
+            <CalendarCheck className="h-5 w-5 text-primary" /> Total Available Budget
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Label className="text-muted-foreground">Total Budget (₹)</Label>
+          <Label className="text-muted-foreground">Budget (₹)</Label>
           <Input
             type="number"
-            placeholder="e.g. 4000"
+            placeholder="e.g. 5000"
             value={budget || ""}
             onChange={(e) => { setBudget(parseFloat(e.target.value) || 0); setResult(null); }}
           />
@@ -89,7 +102,7 @@ export default function ExpenseOptimizer() {
           <CardTitle className="text-lg">Add Expense</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
             <div>
               <Label className="text-muted-foreground">Name</Label>
               <Input placeholder="e.g. Groceries" value={newName} onChange={(e) => setNewName(e.target.value)} />
@@ -101,15 +114,26 @@ export default function ExpenseOptimizer() {
             <div>
               <Label className="text-muted-foreground">Priority</Label>
               <Select value={newPriority} onValueChange={setNewPriority}>
-                <SelectTrigger><SelectValue placeholder="1–5" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>
-                  {[1, 2, 3, 4, 5].map((p) => (
-                    <SelectItem key={p} value={String(p)}>{p} – {PRIORITY_LABELS[p]}</SelectItem>
+                  {PRIORITY_OPTIONS.map((p) => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={addExpense} disabled={!newName || !newAmount || !newPriority} className="gap-1">
+            <div>
+              <Label className="text-muted-foreground">Category</Label>
+              <Select value={newCategory} onValueChange={setNewCategory}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORY_OPTIONS.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={addExpense} disabled={!newName || !newAmount || !newPriority || !newCategory} className="gap-1">
               <Plus className="h-4 w-4" /> Add
             </Button>
           </div>
@@ -129,6 +153,7 @@ export default function ExpenseOptimizer() {
                   <TableHead>Name</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead className="text-center">Priority</TableHead>
+                  <TableHead className="text-center">Category</TableHead>
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -138,9 +163,10 @@ export default function ExpenseOptimizer() {
                     <TableCell className="font-medium">{exp.name}</TableCell>
                     <TableCell className="text-right">{formatINR(exp.amount)}</TableCell>
                     <TableCell className="text-center">
-                      <Badge variant={exp.priority >= 4 ? "default" : exp.priority >= 2 ? "secondary" : "outline"}>
-                        {exp.priority} – {PRIORITY_LABELS[exp.priority]}
-                      </Badge>
+                      <Badge variant={priorityColor(exp.priority)}>{exp.priority}</Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant={exp.category === "Essential" ? "default" : "outline"}>{exp.category}</Badge>
                     </TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon" onClick={() => removeExpense(exp.id)}>
@@ -157,8 +183,8 @@ export default function ExpenseOptimizer() {
               <span>Budget: <strong className="text-foreground">{formatINR(budget)}</strong></span>
             </div>
 
-            <Button onClick={optimize} className="w-full mt-4 gap-2" size="lg">
-              <Zap className="h-4 w-4" /> Optimize Expenses (Knapsack)
+            <Button onClick={generate} className="w-full mt-4 gap-2" size="lg">
+              <Zap className="h-4 w-4" /> Generate Smart Expense Plan
             </Button>
           </CardContent>
         </Card>
@@ -167,11 +193,11 @@ export default function ExpenseOptimizer() {
       {/* Results */}
       {result && (
         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-300">
-          {/* Selected */}
+          {/* Pay First */}
           <Card className="shadow-md border-green-500/30">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2 text-green-700 dark:text-green-400">
-                <CheckCircle2 className="h-5 w-5" /> Recommended to KEEP ({result.selected.length})
+                <CheckCircle2 className="h-5 w-5" /> Pay First ({result.selected.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -182,6 +208,7 @@ export default function ExpenseOptimizer() {
                       <TableHead>Expense</TableHead>
                       <TableHead className="text-right">Amount</TableHead>
                       <TableHead className="text-center">Priority</TableHead>
+                      <TableHead className="text-center">Category</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -189,9 +216,8 @@ export default function ExpenseOptimizer() {
                       <TableRow key={e.id}>
                         <TableCell className="font-medium">{e.name}</TableCell>
                         <TableCell className="text-right">{formatINR(e.amount)}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge>{e.priority}</Badge>
-                        </TableCell>
+                        <TableCell className="text-center"><Badge variant={priorityColor(e.priority)}>{e.priority}</Badge></TableCell>
+                        <TableCell className="text-center"><Badge variant="default">{e.category}</Badge></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -202,12 +228,12 @@ export default function ExpenseOptimizer() {
             </CardContent>
           </Card>
 
-          {/* Rejected */}
-          {result.rejected.length > 0 && (
+          {/* Postpone */}
+          {result.postponed.length > 0 && (
             <Card className="shadow-md border-destructive/30">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2 text-destructive">
-                  <XCircle className="h-5 w-5" /> Suggested to REMOVE ({result.rejected.length})
+                  <Clock className="h-5 w-5" /> Postpone / Skip ({result.postponed.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -217,16 +243,16 @@ export default function ExpenseOptimizer() {
                       <TableHead>Expense</TableHead>
                       <TableHead className="text-right">Amount</TableHead>
                       <TableHead className="text-center">Priority</TableHead>
+                      <TableHead className="text-center">Category</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {result.rejected.map((e) => (
+                    {result.postponed.map((e) => (
                       <TableRow key={e.id} className="opacity-60">
                         <TableCell className="font-medium line-through">{e.name}</TableCell>
                         <TableCell className="text-right">{formatINR(e.amount)}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline">{e.priority}</Badge>
-                        </TableCell>
+                        <TableCell className="text-center"><Badge variant="outline">{e.priority}</Badge></TableCell>
+                        <TableCell className="text-center"><Badge variant="outline">{e.category}</Badge></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -239,8 +265,8 @@ export default function ExpenseOptimizer() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card className="shadow-md">
               <CardContent className="pt-6 text-center">
-                <p className="text-sm text-muted-foreground">Selected Cost</p>
-                <p className="text-2xl font-bold text-primary">{formatINR(result.totalCost)}</p>
+                <p className="text-sm text-muted-foreground">Total Selected Cost</p>
+                <p className="text-2xl font-bold text-primary">{formatINR(result.totalSelectedCost)}</p>
               </CardContent>
             </Card>
             <Card className="shadow-md">
@@ -251,14 +277,14 @@ export default function ExpenseOptimizer() {
             </Card>
             <Card className="shadow-md">
               <CardContent className="pt-6 text-center">
-                <p className="text-sm text-muted-foreground">Total Priority Score</p>
-                <p className="text-2xl font-bold text-foreground">{result.totalPriority} / {expenses.reduce((s, e) => s + e.priority, 0)}</p>
+                <p className="text-sm text-muted-foreground">Expenses Postponed</p>
+                <p className="text-2xl font-bold text-foreground">{result.postponed.length} of {expenses.length}</p>
               </CardContent>
             </Card>
           </div>
 
           <p className="text-xs text-muted-foreground text-center">
-            Solved using 0/1 Knapsack with Dynamic Programming: dp[i][w] = max priority using first i items with budget w. Backtracked to find selected items.
+            Solved using Greedy Algorithm: expenses are sorted by category importance (Essential first), then priority (High → Low), then lowest amount. Items are selected sequentially until the budget is exhausted.
           </p>
         </div>
       )}
