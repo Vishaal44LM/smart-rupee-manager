@@ -5,6 +5,7 @@ import {
   BarChart3,
   Target,
   Tv,
+  Lightbulb,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -26,6 +27,7 @@ const items = [
   { title: "Budget Checker", url: "/budget", icon: BarChart3 },
   { title: "Savings Goal", url: "/savings", icon: Target },
   { title: "Subscriptions", url: "/subscriptions", icon: Tv },
+  { title: "Expense Optimizer", url: "/optimizer", icon: Lightbulb },
 ];
 
 export function AppSidebar() {

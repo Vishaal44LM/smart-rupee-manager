@@ -10,6 +10,7 @@ import TripTracker from "./pages/TripTracker";
 import BudgetChecker from "./pages/BudgetChecker";
 import SavingsGoal from "./pages/SavingsGoal";
 import Subscriptions from "./pages/Subscriptions";
+import ExpenseOptimizer from "./pages/ExpenseOptimizer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/budget" element={<BudgetChecker />} />
             <Route path="/savings" element={<SavingsGoal />} />
             <Route path="/subscriptions" element={<Subscriptions />} />
+            <Route path="/optimizer" element={<ExpenseOptimizer />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
