@@ -1,13 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { BarChart3, AlertTriangle } from "lucide-react";
+import { BarChart3, AlertTriangle, Brain, ShieldCheck, TrendingUp } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { getBudget, saveBudget, formatINR, BudgetData } from "@/lib/finance-store";
-import BudgetDecisionAssistant from "@/components/BudgetDecisionAssistant";
+import { minimaxDecision, DecisionResult } from "@/lib/minimax-budget";
 
 const CATEGORIES = ["Food", "Transport", "Shopping", "Bills", "Entertainment"];
 const COLORS = [
@@ -29,6 +28,48 @@ export default function BudgetChecker() {
   const remaining = data.income - totalExpenses;
   const overspent = remaining < 0;
 
+  const now = new Date();
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const remainingDays = Math.max(1, Math.ceil((endOfMonth.getTime() - now.getTime()) / 86400000));
+
+  // Run minimax analysis for each category with a non-zero expense
+  const categoryAnalysis = useMemo(() => {
+    if (data.income <= 0) return {};
+    const results: Record<string, DecisionResult> = {};
+    const otherExpenses = (cat: string) =>
+      Object.entries(data.expenses)
+        .filter(([k]) => k !== cat)
+        .reduce((a, [, v]) => a + v, 0);
+
+    CATEGORIES.forEach((cat) => {
+      const amount = data.expenses[cat] || 0;
+      if (amount > 0) {
+        results[cat] = minimaxDecision({
+          monthlyBudget: data.income,
+          totalSpent: otherExpenses(cat),
+          newExpenseAmount: amount,
+          expenseCategory: cat,
+          remainingDays,
+          minimumReserve: Math.round(data.income * 0.1),
+        });
+      }
+    });
+    return results;
+  }, [data, remainingDays]);
+
+  // Overall recommendation
+  const overallResult = useMemo(() => {
+    if (data.income <= 0 || totalExpenses <= 0) return null;
+    return minimaxDecision({
+      monthlyBudget: data.income,
+      totalSpent: 0,
+      newExpenseAmount: totalExpenses,
+      expenseCategory: "Bills",
+      remainingDays,
+      minimumReserve: Math.round(data.income * 0.1),
+    });
+  }, [data.income, totalExpenses, remainingDays]);
+
   const pieData = CATEGORIES
     .filter((c) => (data.expenses[c] || 0) > 0)
     .map((c) => ({ name: c, value: data.expenses[c] }));
@@ -39,7 +80,7 @@ export default function BudgetChecker() {
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
           <span>📊</span> Budget Checker
         </h1>
-        <p className="text-muted-foreground mt-1">Monitor your monthly income vs expenses</p>
+        <p className="text-muted-foreground mt-1">Monitor your monthly income vs expenses with AI-powered Minimax analysis</p>
       </div>
 
       <Card className="shadow-md">
@@ -60,17 +101,29 @@ export default function BudgetChecker() {
       <Card className="shadow-md">
         <CardHeader><CardTitle className="text-lg">Expenses by Category</CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          {CATEGORIES.map((cat) => (
-            <div key={cat}>
-              <Label className="text-muted-foreground">{cat} (₹)</Label>
-              <Input
-                type="number"
-                placeholder="0"
-                value={data.expenses[cat] || ""}
-                onChange={(e) => update({ ...data, expenses: { ...data.expenses, [cat]: parseFloat(e.target.value) || 0 } })}
-              />
-            </div>
-          ))}
+          {CATEGORIES.map((cat) => {
+            const analysis = categoryAnalysis[cat];
+            const isSpend = analysis?.recommendation === "SPEND";
+            return (
+              <div key={cat} className="space-y-1">
+                <Label className="text-muted-foreground">{cat} (₹)</Label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={data.expenses[cat] || ""}
+                  onChange={(e) => update({ ...data, expenses: { ...data.expenses, [cat]: parseFloat(e.target.value) || 0 } })}
+                />
+                {analysis && (
+                  <div className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-md ${isSpend ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400" : "bg-destructive/10 text-destructive"}`}>
+                    {isSpend ? <ShieldCheck className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
+                    <span className="font-medium">{analysis.recommendation}</span>
+                    <span className="text-muted-foreground">—</span>
+                    <span className="truncate">{analysis.reason}</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
 
@@ -104,8 +157,50 @@ export default function BudgetChecker() {
         </Card>
       </div>
 
-      {/* AI Budget Decision Assistant */}
-      <BudgetDecisionAssistant monthlyIncome={data.income} totalSpent={totalExpenses} />
+      {/* Minimax Overall Analysis */}
+      {overallResult && (
+        <Card className="shadow-md border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Brain className="h-5 w-5 text-primary" />
+              Minimax Budget Analysis
+              <span className="text-xs font-normal text-muted-foreground ml-auto">{remainingDays} days left</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Alert variant={overallResult.recommendation === "SPEND" ? "default" : "destructive"}
+              className={overallResult.recommendation === "SPEND" ? "border-green-500/50 bg-green-50 dark:bg-green-950/20" : ""}>
+              {overallResult.recommendation === "SPEND" ? <ShieldCheck className="h-4 w-4 text-green-600" /> : <AlertTriangle className="h-4 w-4" />}
+              <AlertDescription className="font-semibold">
+                {overallResult.recommendation === "SPEND" ? "✅" : "⚠️"} Overall: Your spending is{" "}
+                <span className={overallResult.recommendation === "SPEND" ? "text-green-700 dark:text-green-400" : "text-destructive"}>
+                  {overallResult.recommendation === "SPEND" ? "within safe limits" : "risky — consider saving"}
+                </span>
+              </AlertDescription>
+            </Alert>
+            <p className="text-sm text-muted-foreground">{overallResult.reason}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <Card className={`shadow-sm ${overallResult.recommendation === "SPEND" ? "border-green-500/30 bg-green-50/50 dark:bg-green-950/10" : "border-muted"}`}>
+                <CardContent className="pt-4 text-center">
+                  <TrendingUp className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">Spend Score</p>
+                  <p className="text-xl font-bold">{overallResult.spendScore}</p>
+                </CardContent>
+              </Card>
+              <Card className={`shadow-sm ${overallResult.recommendation === "SAVE" ? "border-blue-500/30 bg-blue-50/50 dark:bg-blue-950/10" : "border-muted"}`}>
+                <CardContent className="pt-4 text-center">
+                  <ShieldCheck className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">Save Score</p>
+                  <p className="text-xl font-bold">{overallResult.saveScore}</p>
+                </CardContent>
+              </Card>
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              Minimax tree: MAX(user) picks best of MIN(risk) evaluated scenarios for both Spend &amp; Save options.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {pieData.length > 0 && (
         <Card className="shadow-md">
