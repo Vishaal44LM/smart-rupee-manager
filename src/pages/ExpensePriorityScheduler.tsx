@@ -11,13 +11,10 @@ import {
   SchedulerExpense,
   SchedulerResult,
   PriorityLevel,
-  ExpenseCategory,
   greedySchedule,
+  detectExpenseAttributes,
 } from "@/lib/greedy-scheduler";
 import { formatINR } from "@/lib/finance-store";
-
-const PRIORITY_OPTIONS: PriorityLevel[] = ["High", "Medium", "Low"];
-const CATEGORY_OPTIONS: ExpenseCategory[] = ["Essential", "Non-Essential"];
 
 const priorityColor = (p: PriorityLevel) =>
   p === "High" ? "default" : p === "Medium" ? "secondary" : "outline";
