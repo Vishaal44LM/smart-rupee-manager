@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { CalendarCheck, Plus, Trash2, Zap, CheckCircle2, Clock } from "lucide-react";
@@ -11,13 +10,10 @@ import {
   SchedulerExpense,
   SchedulerResult,
   PriorityLevel,
-  ExpenseCategory,
   greedySchedule,
+  detectExpenseAttributes,
 } from "@/lib/greedy-scheduler";
 import { formatINR } from "@/lib/finance-store";
-
-const PRIORITY_OPTIONS: PriorityLevel[] = ["High", "Medium", "Low"];
-const CATEGORY_OPTIONS: ExpenseCategory[] = ["Essential", "Non-Essential"];
 
 const priorityColor = (p: PriorityLevel) =>
   p === "High" ? "default" : p === "Medium" ? "secondary" : "outline";
@@ -36,25 +32,22 @@ export default function ExpensePriorityScheduler() {
   // Form state
   const [newName, setNewName] = useState("");
   const [newAmount, setNewAmount] = useState<number>(0);
-  const [newPriority, setNewPriority] = useState<string>("");
-  const [newCategory, setNewCategory] = useState<string>("");
 
   const addExpense = () => {
-    if (!newName || !newAmount || !newPriority || !newCategory) return;
+    if (!newName || !newAmount) return;
+    const { priority, category } = detectExpenseAttributes(newName);
     setExpenses((prev) => [
       ...prev,
       {
         id: crypto.randomUUID(),
         name: newName,
         amount: newAmount,
-        priority: newPriority as PriorityLevel,
-        category: newCategory as ExpenseCategory,
+        priority,
+        category,
       },
     ]);
     setNewName("");
     setNewAmount(0);
-    setNewPriority("");
-    setNewCategory("");
     setResult(null);
   };
 
@@ -102,41 +95,22 @@ export default function ExpensePriorityScheduler() {
           <CardTitle className="text-lg">Add Expense</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
             <div>
               <Label className="text-muted-foreground">Name</Label>
-              <Input placeholder="e.g. Groceries" value={newName} onChange={(e) => setNewName(e.target.value)} />
+              <Input placeholder="e.g. Groceries, Netflix, Rent" value={newName} onChange={(e) => setNewName(e.target.value)} />
             </div>
             <div>
               <Label className="text-muted-foreground">Amount (₹)</Label>
               <Input type="number" placeholder="e.g. 1500" value={newAmount || ""} onChange={(e) => setNewAmount(parseFloat(e.target.value) || 0)} />
             </div>
-            <div>
-              <Label className="text-muted-foreground">Priority</Label>
-              <Select value={newPriority} onValueChange={setNewPriority}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  {PRIORITY_OPTIONS.map((p) => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Category</Label>
-              <Select value={newCategory} onValueChange={setNewCategory}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  {CATEGORY_OPTIONS.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={addExpense} disabled={!newName || !newAmount || !newPriority || !newCategory} className="gap-1">
+            <Button onClick={addExpense} disabled={!newName || !newAmount} className="gap-1">
               <Plus className="h-4 w-4" /> Add
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            💡 The Greedy algorithm auto-detects priority &amp; category from the expense name (e.g. "Rent" → High / Essential, "Netflix" → Low / Non-Essential).
+          </p>
         </CardContent>
       </Card>
 

@@ -29,6 +29,47 @@ const CATEGORY_SCORE: Record<ExpenseCategory, number> = {
   "Non-Essential": 0,
 };
 
+const ESSENTIAL_KEYWORDS = [
+  "rent", "food", "groceries", "grocery", "transport", "fuel", "petrol", "diesel",
+  "electricity", "water", "gas", "bills", "bill", "fees", "fee", "medicine",
+  "medical", "hospital", "insurance", "emi", "loan", "school", "college",
+  "tuition", "milk", "vegetables", "ration", "mobile recharge", "internet",
+  "wifi", "tax", "maintenance",
+];
+
+const HIGH_PRIORITY_KEYWORDS = [
+  "rent", "emi", "loan", "electricity", "water", "gas", "medicine", "medical",
+  "hospital", "insurance", "fees", "fee", "tax", "school", "college", "tuition",
+  "fuel", "petrol", "diesel", "milk", "groceries", "grocery", "ration",
+];
+
+const MEDIUM_PRIORITY_KEYWORDS = [
+  "food", "transport", "mobile recharge", "internet", "wifi", "bills", "bill",
+  "maintenance", "vegetables",
+];
+
+/**
+ * Auto-detect priority and category from expense name using keyword matching.
+ */
+export function detectExpenseAttributes(name: string): {
+  priority: PriorityLevel;
+  category: ExpenseCategory;
+} {
+  const lower = name.toLowerCase().trim();
+
+  const isEssential = ESSENTIAL_KEYWORDS.some((kw) => lower.includes(kw));
+  const category: ExpenseCategory = isEssential ? "Essential" : "Non-Essential";
+
+  let priority: PriorityLevel = "Low";
+  if (HIGH_PRIORITY_KEYWORDS.some((kw) => lower.includes(kw))) {
+    priority = "High";
+  } else if (MEDIUM_PRIORITY_KEYWORDS.some((kw) => lower.includes(kw))) {
+    priority = "Medium";
+  }
+
+  return { priority, category };
+}
+
 /**
  * Greedy Expense Priority Scheduler
  *
