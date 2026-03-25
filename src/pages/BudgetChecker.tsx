@@ -22,7 +22,16 @@ export default function BudgetChecker() {
 
   useEffect(() => setData(getBudget()), []);
 
-  const update = (d: BudgetData) => { setData(d); saveBudget(d); };
+  const update = (d: BudgetData) => {
+    // Clean out zero/falsy expense entries so they don't linger
+    const cleanedExpenses: Record<string, number> = {};
+    for (const [k, v] of Object.entries(d.expenses)) {
+      if (v > 0) cleanedExpenses[k] = v;
+    }
+    const cleaned = { ...d, expenses: cleanedExpenses };
+    setData(cleaned);
+    saveBudget(cleaned);
+  };
 
   const totalExpenses = Object.values(data.expenses).reduce((a, b) => a + b, 0);
   const remaining = data.income - totalExpenses;
