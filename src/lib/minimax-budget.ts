@@ -166,16 +166,20 @@ export function minimaxDecision(input: DecisionInput): DecisionResult {
   const spendScoreWorst = evaluateUtility(
     balanceIfSpend,
     minimumReserve,
-    Math.max(1, Math.floor(remainingDays * 0.5)), // pessimistic: fewer days left
+    Math.max(1, Math.floor(remainingDays * 0.5)),
     expenseCategory,
-    true
+    true,
+    newExpenseAmount,
+    monthlyBudget
   );
   const spendScoreNormal = evaluateUtility(
     balanceIfSpend,
     minimumReserve,
     remainingDays,
     expenseCategory,
-    true
+    true,
+    newExpenseAmount,
+    monthlyBudget
   );
   // MIN picks worst case
   const spendScore = Math.min(spendScoreWorst, spendScoreNormal);
@@ -186,14 +190,18 @@ export function minimaxDecision(input: DecisionInput): DecisionResult {
     minimumReserve,
     Math.max(1, Math.floor(remainingDays * 0.5)),
     expenseCategory,
-    false
+    false,
+    newExpenseAmount,
+    monthlyBudget
   );
   const saveScoreNormal = evaluateUtility(
     balanceIfSave,
     minimumReserve,
     remainingDays,
     expenseCategory,
-    false
+    false,
+    newExpenseAmount,
+    monthlyBudget
   );
   const saveScore = Math.min(saveScoreWorst, saveScoreNormal);
 
