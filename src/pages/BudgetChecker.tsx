@@ -200,7 +200,7 @@ export default function BudgetChecker() {
             <CardTitle className="text-lg flex items-center gap-2">
               <Brain className="h-5 w-5 text-primary" />
               Minimax Budget Analysis
-              <span className="text-xs font-normal text-muted-foreground ml-auto">{remainingDays} days left</span>
+              
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
