@@ -61,7 +61,7 @@ function balanceMembership(pct: number): { poor: number; moderate: number; good:
   };
 }
 
-function labelFromMembership(vals: Record<string, number>): string {
+function labelFromMembership(vals: { [key: string]: number }): string {
   const entries = Object.entries(vals).sort((a, b) => b[1] - a[1]);
   if (entries.length === 0) return "Unknown";
   const [top, second] = entries;

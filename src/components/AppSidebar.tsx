@@ -32,6 +32,8 @@ const items = [
   { title: "Subscriptions", url: "/subscriptions", icon: Tv },
   { title: "Priority Scheduler", url: "/optimizer", icon: Lightbulb },
   { title: "Budget Optimizer", url: "/knapsack", icon: Sparkles },
+  { title: "Financial Advisor", url: "/advisor", icon: Brain },
+  { title: "Health Meter", url: "/health", icon: Activity },
 ];
 
 export function AppSidebar() {
