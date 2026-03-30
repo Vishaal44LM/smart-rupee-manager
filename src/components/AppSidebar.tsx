@@ -29,6 +29,7 @@ const items = [
   { title: "Savings Goal", url: "/savings", icon: Target },
   { title: "Subscriptions", url: "/subscriptions", icon: Tv },
   { title: "Priority Scheduler", url: "/optimizer", icon: Lightbulb },
+  { title: "Budget Optimizer", url: "/knapsack", icon: Sparkles },
 ];
 
 export function AppSidebar() {
