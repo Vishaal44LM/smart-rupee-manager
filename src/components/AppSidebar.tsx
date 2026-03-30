@@ -6,6 +6,7 @@ import {
   Target,
   Tv,
   Lightbulb,
+  Sparkles,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
