@@ -100,9 +100,9 @@ export default function FinancialHealth() {
           <CardDescription>How your values map to fuzzy categories (values represent degree of membership 0–1)</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
-          <LevelRow icon={TrendingDown} label="Spending Level" displayLabel={result.spendingLabel} values={result.spendingLevel} />
-          <LevelRow icon={PiggyBank} label="Savings Level" displayLabel={result.savingsLabel} values={result.savingsLevel} />
-          <LevelRow icon={Wallet} label="Remaining Balance" displayLabel={result.balanceLabel} values={result.balanceLevel} />
+          <LevelRow icon={TrendingDown} label="Spending Level" displayLabel={result.spendingLabel} values={{ ...result.spendingLevel }} />
+          <LevelRow icon={PiggyBank} label="Savings Level" displayLabel={result.savingsLabel} values={{ ...result.savingsLevel }} />
+          <LevelRow icon={Wallet} label="Remaining Balance" displayLabel={result.balanceLabel} values={{ ...result.balanceLevel }} />
         </CardContent>
       </Card>
 

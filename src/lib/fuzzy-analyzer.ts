@@ -182,9 +182,9 @@ export function analyzeFuzzyHealth(input: FuzzyInput): FuzzyResult {
 
   const dominant = ruleResults.reduce((a, b) => (b.strength > a.strength ? b : a), ruleResults[0]);
 
-  const spendingLabel = labelFromMembership(sp);
-  const savingsLabel = labelFromMembership(sv);
-  const balanceLabel = labelFromMembership(bl);
+  const spendingLabel = labelFromMembership({ ...sp });
+  const savingsLabel = labelFromMembership({ ...sv });
+  const balanceLabel = labelFromMembership({ ...bl });
   const healthLabel = scoreLabel(healthScore, "health");
   const riskLabel = scoreLabel(riskScore, "risk");
 
