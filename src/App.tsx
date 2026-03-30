@@ -11,6 +11,7 @@ import BudgetChecker from "./pages/BudgetChecker";
 import SavingsGoal from "./pages/SavingsGoal";
 import Subscriptions from "./pages/Subscriptions";
 import ExpensePriorityScheduler from "./pages/ExpensePriorityScheduler";
+import BudgetOptimizer from "./pages/BudgetOptimizer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
