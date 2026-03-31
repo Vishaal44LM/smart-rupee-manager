@@ -35,6 +35,7 @@ const items = [
   { title: "Budget Optimizer", url: "/knapsack", icon: Sparkles },
   { title: "Financial Advisor", url: "/advisor", icon: Brain },
   { title: "Health Meter", url: "/health", icon: Activity },
+  { title: "Savings Planner", url: "/means-end", icon: Compass },
 ];
 
 export function AppSidebar() {

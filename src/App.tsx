@@ -37,6 +37,7 @@ const App = () => (
             <Route path="/knapsack" element={<BudgetOptimizer />} />
             <Route path="/advisor" element={<FinancialAdvisor />} />
             <Route path="/health" element={<FinancialHealth />} />
+            <Route path="/means-end" element={<MeansEndPlanner />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

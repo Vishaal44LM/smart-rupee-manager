@@ -48,7 +48,7 @@ export function analyzeMeansEnd(input: MeansEndInput): MeansEndResult {
   const expenses = budget.expenses;
 
   const totalSpent = Object.values(expenses).reduce((s, v) => s + v, 0);
-  const totalSubCost = subs.reduce((s, sub) => s.monthlyCost + s, 0);
+  const totalSubCost = subs.reduce((s, sub) => s + sub.monthlyCost, 0);
   const remainingBalance = Math.max(0, monthlyBudget - totalSpent);
 
   let discretionarySpending = 0;
