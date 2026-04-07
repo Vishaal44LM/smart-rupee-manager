@@ -31,9 +31,9 @@ export default function MeansEndPlanner() {
       currentSavings,
       targetSavings,
       monthlyBudget,
-      targetDuration: targetDuration ? parseInt(targetDuration) || null : null,
+      targetDuration: null,
     });
-  }, [currentSavings, targetSavings, monthlyBudget, targetDuration]);
+  }, [currentSavings, targetSavings, monthlyBudget]);
 
   const priorityColor = (p: "High" | "Medium" | "Low") => {
     if (p === "High") return "bg-destructive/10 text-destructive border-destructive/20";
