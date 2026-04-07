@@ -8,7 +8,6 @@ import {
   Lightbulb,
   Sparkles,
   Brain,
-  Activity,
   Compass,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
