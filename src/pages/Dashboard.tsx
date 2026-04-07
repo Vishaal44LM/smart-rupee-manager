@@ -23,6 +23,10 @@ const quickActions = [
   { title: "Budget Checker", icon: BarChart3, url: "/budget", emoji: "📊" },
   { title: "Savings Goal", icon: Target, url: "/savings", emoji: "🎯" },
   { title: "Subscriptions", icon: Tv, url: "/subscriptions", emoji: "📺" },
+  { title: "Priority Scheduler", icon: TrendingDown, url: "/optimizer", emoji: "⚡" },
+  { title: "Budget Optimizer", icon: PiggyBank, url: "/knapsack", emoji: "✨" },
+  { title: "Financial Advisor", icon: Wallet, url: "/advisor", emoji: "🧠" },
+  { title: "Savings Planner", icon: CreditCard, url: "/means-end", emoji: "🧭" },
 ];
 
 export default function Dashboard() {
